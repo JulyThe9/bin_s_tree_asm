@@ -1,4 +1,15 @@
 %include 'stud_io.inc'
+
+%macro pcall 1-*
+    %rep %0-1
+        %rotate -1
+            push dword %1
+    %endrep
+    %rotate -1
+            call %1
+            add esp, (%0-1)*4
+%endmacro
+
 global _start
 
 section .data
@@ -30,69 +41,30 @@ _start:
         mov eax, trsize
         mov [root+eax-1], byte 't'      ;root+61 is trsize address
 
-        push rootptr
-        push dword 3
-        call insert
-        add esp, 8
-
-        push rootptr
-        push dword 4
-        call insert
-        add esp, 8
-        
-        push rootptr
-        push dword 2
-        call insert
-        add esp, 8
-        
-        push rootptr
-        push dword 5
-        call insert
-        add esp, 8        
-
-        push rootptr
-        push dword 9
-        call insert
-        add esp, 8        
-
-        ; eax -> 2, no space
-        ; push rootptr
-        ; push dword 1
-        ; call insert
-        ; add esp, 8        
+        pcall insert, 3, rootptr
+        nop
+        pcall insert, 4, rootptr
+        nop
+        pcall insert, 2, rootptr
+        nop
+        pcall insert, 5, rootptr
+        nop
+        pcall insert, 9, rootptr
+        nop
 
         pop edi
         push edi
 
-        ; deleting two
-        push rootptr
-        push dword 2
-        call delete
-        add esp, 8        
-
-        ; eax -> 2, no space
-        push rootptr
-        push dword 1
-        call insert
-        add esp, 8        
-
-        ; deleting one
-        push rootptr
-        push dword 1
-        call delete
-        add esp, 8        
-        
-        ; deleting nine
-        push rootptr
-        push dword 9
-        call delete
-        add esp, 8
-
-        ; eax -> 2, no space
-        push rootptr
-        push dword 10
-        call insert
-        add esp, 8        
+        pcall delete, 2, rootptr
+        nop
+        pcall insert, 1, rootptr
+        nop
+        pcall delete, 1, rootptr
+        nop
+        pcall delete, 9, rootptr
+        nop
+        pcall insert, 10, rootptr
+        nop
 
         pop edi
 
