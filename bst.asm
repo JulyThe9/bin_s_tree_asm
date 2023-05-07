@@ -39,7 +39,7 @@ _start:
         push edi 
 
         mov eax, trsize
-        mov [root+eax-1], byte 't'      ;root+61 is trsize address
+        mov [root+eax-1], byte 't'      ;root+trsize is rootptr address
 
         pcall insert, 3, rootptr
         nop
