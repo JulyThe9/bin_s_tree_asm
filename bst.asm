@@ -76,6 +76,24 @@ _start:
         call insert
         add esp, 8        
 
+        ; deleting one
+        push rootptr
+        push dword 1
+        call delete
+        add esp, 8        
+        
+        ; deleting nine
+        push rootptr
+        push dword 9
+        call delete
+        add esp, 8
+
+        ; eax -> 2, no space
+        push rootptr
+        push dword 10
+        call insert
+        add esp, 8        
+
         pop edi
 
         xor ecx, ecx            ; init sum
@@ -207,7 +225,16 @@ insert:
         mov [esi+freeOffset], byte 1
         mov [esi+leftOffset], dword 0
         mov [esi+rightOffset], dword 0
+
+; cycle for saerching next free space for the next node
+.cycle_sfree:
         add esi, nodeSize
+        cmp [esi], byte 't'     ; no more space to traverse, quitting
+        je .cycle_sfree_quit     
+        cmp [esi + freeOffset], byte 1
+        jne .cycle_sfree_quit  ; next node space free, quitting
+        jmp .cycle_sfree        ; next node space taken, cont. traverse
+.cycle_sfree_quit:        
         mov eax, 0             ; success
 .quit:
         mov esp, ebp
@@ -242,13 +269,13 @@ delete:
         mov edx, [edi]
         mov [edi], dword 0            ; freeing
         mov [edx], dword 0            ; value to null
-        mov [edx+freeOffset], dword 0 ; free
+        mov [edx+freeOffset], byte 0  ; free
         ; not touching the children because there are none
         mov eax, 0      ; success
 
         cmp esi, edx    ; comparing del node addrs and cur free space addrs
         jl .quit        ; nothing as we will reach the free edx eventually 
-        mov esi, edx
+        mov esi, edx    ; free space before cur esi, moving to have no gaps 
         jmp .quit
 
 .leftChild:
