@@ -56,14 +56,27 @@ _start:
         add esp, 8        
 
         ; eax -> 2, no space
+        ; push rootptr
+        ; push dword 1
+        ; call insert
+        ; add esp, 8        
+
+        pop edi
+        push edi
+
+        ; deleting two
+        push rootptr
+        push dword 2
+        call delete
+        add esp, 8        
+
+        ; eax -> 2, no space
         push rootptr
         push dword 1
         call insert
         add esp, 8        
 
         pop edi
-
-        ; deleting two
 
         xor ecx, ecx            ; init sum
         push dword [rootptr]
@@ -217,10 +230,15 @@ delete:
         jmp .quit
         
 .candelete:
-        cmp [edi + leftOffset], dword 0
+        mov edx, [edi]
+        add edx, leftOffset
+        cmp [edx], dword 0
         jne .leftChild
-        cmp [edi + rightOffset], dword 0
+        mov edx, [edi]
+        add edx, leftOffset
+        cmp [edx], dword 0
         jne .rightChild
+        
         mov edx, [edi]
         mov [edi], dword 0            ; freeing
         mov [edx], dword 0            ; value to null
