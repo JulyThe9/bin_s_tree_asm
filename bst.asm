@@ -13,7 +13,7 @@
 global _start
 
 section .data
-nodeNum         equ 5
+nodeNum         equ 8
 nodeSize        equ 13
 freeOffset      equ 4
 leftOffset      equ 5
@@ -43,27 +43,25 @@ _start:
 
         pcall insert, 3, rootptr
         nop
-        pcall insert, 4, rootptr
-        nop
-        pcall insert, 2, rootptr
+        pcall insert, 6, rootptr
         nop
         pcall insert, 5, rootptr
         nop
+        pcall insert, 4, rootptr
+        nop
+        pcall insert, 10, rootptr
+        nop
         pcall insert, 9, rootptr
+        nop
+        pcall insert, 7, rootptr
+        nop
+        pcall insert, 8, rootptr
         nop
 
         pop edi
         push edi
 
-        pcall delete, 2, rootptr
-        nop
-        pcall insert, 1, rootptr
-        nop
-        pcall delete, 1, rootptr
-        nop
-        pcall delete, 9, rootptr
-        nop
-        pcall insert, 10, rootptr
+        pcall delete, 6, rootptr
         nop
 
         pop edi
@@ -75,13 +73,21 @@ _start:
 
         nop
 
-        FINISH
+        push ecx
+
+        mov eax, 4
+        mov ebx, 1
+        mov ecx, [esp]  ;could have used register?
+        mov edx, 4
+        int 80h
+
+        mov eax, 1      ; _exit syscal number
+        mov ebx, 0      ; 0 success status
+        int 80h         ; systcall (prog interrupt) handler
 
 travsum:
         push ebp
         mov ebp, esp
-
-        ;mov ebx, [ebp+8]        ;root 
         
         cmp dword [ebp+8], 0
         jne .rcall       
@@ -218,6 +224,8 @@ delete:
         push ebp
         mov ebp, esp
 
+        push edi
+
         push dword [ebp+8]            ; push value again
         push dword [ebp+12]           ; push addrs to addrs
         call search
@@ -229,12 +237,12 @@ delete:
         jmp .quit
         
 .candelete:
-        mov edx, [edi]
-        add edx, leftOffset
-        cmp [edx], dword 0
+        mov edx, [edi]                ; [edx] contains value
+        add edx, leftOffset           
+        cmp [edx], dword 0            ; now [edx] contains addrs of left
         jne .leftChild
         mov edx, [edi]
-        add edx, leftOffset
+        add edx, rightOffset
         cmp [edx], dword 0
         jne .rightChild
         
@@ -251,17 +259,106 @@ delete:
         jmp .quit
 
 .leftChild:
-        cmp [edi + rightOffset], dword 0
+        mov edx, [edi]
+        add edx, rightOffset
+        cmp [edx], dword 0
         jne .bothChildren
-        ; only child code
+
+        ; left is the only child case
+
+        sub edx, rightOffset
+        mov [edx], dword 0            ; value to null
+        mov [edx + freeOffset], byte 0  ; free        
+
+        ; reparenting
+        add edx, leftOffset    ; addrs of addrs of del node l child
+        mov eax, [edx]          ; addrs of of del node l child
+        
+        ; d node parent's addrs to addrs to left
+        ; now contains what d node's addrs to addrs to
+        ; left contained
+        mov [edi], eax                    
+        mov [edx], dword 0      ; addrs to right to null
+        
+        sub edx, leftOffset
+        mov eax, 0      ; success
+        cmp esi, edx    ; comparing del node addrs and cur free space addrs
+        jl .quit        ; nothing as we will reach the free edx eventually 
+        mov esi, edx    ; free space before cur esi, moving to have no gaps 
         jmp .quit
 
 .rightChild:    ; if we are here then right is the only child
-        ; only child code
+        mov edx, [edi]
+        mov [edx], dword 0            ; value to null
+        mov [edx + freeOffset], byte 0  ; free        
+
+        ; reparenting
+        add edx, rightOffset    ; addrs of addrs of del node r child
+        mov eax, [edx]          ; addrs of of del node r child
+        
+        ; d node parent's addrs to addrs to right
+        ; now contains what d node's addrs to addrs to
+        ; right contained
+        mov [edi], eax                    
+        mov [edx], dword 0      ; addrs to right to null
+        
+        sub edx, rightOffset
+        mov eax, 0      ; success
+        cmp esi, edx    ; comparing del node addrs and cur free space addrs
+        jl .quit        ; nothing as we will reach the free edx eventually 
+        mov esi, edx    ; free space before cur esi, moving to have no gaps 
         jmp .quit
 
 .bothChildren:
-        ; both children code
+        mov edx, [edi]
+        add edx, rightOffset 
+        push edx
+        call findimmedsucc
+        add esp, 4
+
+        ; not needed because ebx only changed in bothChildren,
+        ; and bothChildren case can't happen in a recursive call
+        ; but keep it for explicit CDECL
+        push ebx
+        mov ebx, [edx]
+        mov ebx, [ebx]          ; successor val
+        
+        push edx
+        push ebx
+        call delete 
+        add esp, 8
+
+        mov edx, [edi]          ; orig edi due to CDECL of findim...
+        mov [edx], ebx             ; replacing val with successor val
+
+        ; deletion taken care by delete call above
+        ; eax has its ret value
+        ; nothing more to be done
+
+        pop ebx
+.quit:
+        pop edi
+        mov esp, ebp
+        pop ebp
+        ret
+
+; return addrs to addrs to val in edx
+findimmedsucc:
+        push ebp
+        mov ebp, esp
+
+        xor edx, edx
+        mov edx, [ebp + 8]
+        mov edx, [edx]      ; edx now has addrs to val
+        add edx, leftOffset
+        cmp [edx], dword 0  ; checking if there is right child
+        jne .rcall
+        mov edx, [ebp + 8]
+        jmp .quit
+.rcall:
+        push edx
+        call findimmedsucc 
+        add esp, 4
 .quit:
         mov esp, ebp
         pop ebp
