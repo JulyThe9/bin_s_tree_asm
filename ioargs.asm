@@ -192,11 +192,7 @@ atoi:
         ret
 
 printnewline:
-        mov edx, 1
-        mov ecx, lf
-        mov ebx, 1
-        mov eax, 4
-        int 80h
+        kernel 4, 1, lf, 1
         ret
 
 findstrlen:
