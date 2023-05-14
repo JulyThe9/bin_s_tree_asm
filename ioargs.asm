@@ -1,5 +1,7 @@
 ;; bin_s_tree/ioargs.asm ;;
 
+%include 'kernel.inc'
+
 global readcmd
 
 section .data
@@ -105,12 +107,7 @@ mainioctrl:
 
 .missval:
 .wrongcmd:
-        ; kernel 4, 2, help1msg, help1len
-        mov edx, help1len
-        mov ecx, help1msg
-        mov ebx, 2
-        mov eax, 4
-        int 80h
+        kernel 4, 2, help1msg, help1len
 .quit:
         pop edi
         pop ebx
@@ -132,6 +129,10 @@ readcmd:
         mov eax, [ebp+16]
         cmp ecx, eax        ; checking if too many cmd line args
         jle .lp
+
+        push eax
+        kernel 4, 2, warr1msg, warr1len
+        pop eax
 
         mov ecx, eax
 
