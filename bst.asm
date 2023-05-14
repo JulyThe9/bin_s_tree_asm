@@ -11,21 +11,45 @@
 %endmacro
 
 global _start
+extern readcmd
 
 section .data
+; reading consts
+cmdNum          equ 3
+; tree consts
 nodeNum         equ 8
 nodeSize        equ 13
 freeOffset      equ 4
 leftOffset      equ 5
 rightOffset     equ 9
 
+
 section .bss
+; storage cmds for tree building (cmd args)
+readnodes resb 5*cmdNum     ; byte for cmd, 4 bytes for val
+
+; actual tree
 root            resb nodeSize * nodeNum + 1
 trsize          equ $-root 
 rootptr         resd 1
 
 section .text
 _start:
+        mov eax, esp
+        xor ecx, ecx
+        mov edi, readnodes
+        push edi                ; to restore later and see res
+
+        push dword cmdNum
+        push edi
+        push eax                ; for the pushed edi
+        xor eax, eax
+        call readcmd
+        add esp, 12
+
+        pop edi
+        nop
+
         ;initializing
         xor edi, edi
         mov [rootptr], dword 0
@@ -39,7 +63,11 @@ _start:
         push edi 
 
         mov eax, trsize
-        mov [root+eax-1], byte 't'      ;root+trsize is rootptr address
+        mov [root+eax-1], byte 't'      ;root+trsize is rootptr address        
+
+        mov ebx, 0
+        mov eax, 1
+        int 80h
 
         pcall insert, 3, rootptr
         nop
