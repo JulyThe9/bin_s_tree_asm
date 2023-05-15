@@ -1,4 +1,5 @@
 %include 'stud_io.inc'
+%include 'kernel.inc'
 
 %macro pcall 1-*
     %rep %0-1
@@ -15,7 +16,8 @@ extern readcmd
 
 section .data
 ; reading consts
-cmdNum          equ 3
+cmdNum          equ 9
+cmdSize         equ 5
 ; tree consts
 nodeNum         equ 8
 nodeSize        equ 13
@@ -26,7 +28,7 @@ rightOffset     equ 9
 
 section .bss
 ; storage cmds for tree building (cmd args)
-readnodes resb 5*cmdNum     ; byte for cmd, 4 bytes for val
+readnodes       resb cmdSize * cmdNum     ; byte for cmd, 4 bytes for val
 
 ; actual tree
 root            resb nodeSize * nodeNum + 1
@@ -35,10 +37,9 @@ rootptr         resd 1
 
 section .text
 _start:
-        mov eax, esp
+        mov eax, esp            ; recording cur stack top (# of cmd args)
         xor ecx, ecx
         mov edi, readnodes
-        push edi                ; to restore later and see res
 
         push dword cmdNum
         push edi
@@ -46,10 +47,6 @@ _start:
         xor eax, eax
         call readcmd
         add esp, 12
-
-        pop edi
-        
-        nop
 
         ;initializing
         xor edi, edi
@@ -60,59 +57,68 @@ _start:
         ; node to be inserted
         mov esi, root
 
-        mov edi, root             ;pointer to cur free cell to edi
-        push edi 
+        mov edi, root                   ;pointer to cur free cell to edi 
 
         mov eax, trsize
-        mov [root+eax-1], byte 't'      ;root+trsize is rootptr address        
+        mov [root+eax-1], byte 't'      ; root+trsize is rootptr address        
 
-        mov ebx, 0
-        mov eax, 1
-        int 80h
+        mov ecx, cmdNum
+        mov edx, readnodes
+.lp:    push ecx
+        push edx
+        pcall mainctrl, edx, rootptr 
+        
+        pop edx
+        add edx, cmdSize
 
-        pcall insert, 3, rootptr
-        nop
-        pcall insert, 6, rootptr
-        nop
-        pcall insert, 5, rootptr
-        nop
-        pcall insert, 4, rootptr
-        nop
-        pcall insert, 10, rootptr
-        nop
-        pcall insert, 9, rootptr
-        nop
-        pcall insert, 7, rootptr
-        nop
-        pcall insert, 8, rootptr
+        pop ecx
+        loop .lp
+
+        xor ecx, ecx                    ; init sum
+        pcall travsum, [rootptr]
         nop
 
-        pop edi
+        kernel 1, 0
+
+mainctrl:
+        push ebp
+        mov ebp, esp
         push edi
+        push ebx
+        mov edx, [ebp+8]    ; command + data (value)
+        mov edi, [ebp+12]   ; rootptr
+        mov bl, [edx]       
+        cmp bl, 'i'
+        jne .checkdel
+        
+        mov eax, [edx+1]
+        pcall insert, eax, edi
 
-        pcall delete, 6, rootptr
-        nop
+        jmp .quit
 
+.checkdel:
+        cmp bl, 'd'
+        jne .checkpr
+        
+        mov eax, [edx+1]
+        pcall delete, eax, edi
+
+        jmp .quit
+
+.checkpr:
+        cmp bl, 'p'
+        jne .checksum
+        ; print tree, implement later
+        jmp .quit
+
+.checksum:
+        pcall travsum, [edi] 
+.quit:
+        pop ebx
         pop edi
-
-        xor ecx, ecx            ; init sum
-        push dword [rootptr]
-        call travsum
-        add esp, 4
-
-        nop
-
-        push ecx
-
-        mov eax, 4
-        mov ebx, 1
-        mov ecx, [esp]  ;could have used register?
-        mov edx, 4
-        int 80h
-
-        mov eax, 1      ; _exit syscal number
-        mov ebx, 0      ; 0 success status
-        int 80h         ; systcall (prog interrupt) handler
+        mov esp, ebp
+        pop ebp
+        ret
 
 travsum:
         push ebp

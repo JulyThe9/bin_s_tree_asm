@@ -34,6 +34,7 @@ mainioctrl:
 
         mov edx, [ebp+8]    ; addrs to stirng to parse
         mov edi, [ebp+12]   ; addrs to return buffer
+        ; TODO [edx] first byte to reg, not to address memory n times
         cmp [edx], byte 'i'
         jne .checkdel
         
