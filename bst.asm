@@ -28,7 +28,7 @@ rightOffset     equ 9
 
 section .bss
 ; storage cmds for tree building (cmd args)
-readnodes       resb cmdSize * cmdNum     ; byte for cmd, 4 bytes for val
+readcmds       resb cmdSize * cmdNum     ; byte for cmd, 4 bytes for val
 
 ; actual tree
 root            resb nodeSize * nodeNum + 1
@@ -39,7 +39,7 @@ section .text
 _start:
         mov eax, esp            ; recording cur stack top (# of cmd args)
         xor ecx, ecx
-        mov edi, readnodes
+        mov edi, readcmds
 
         push dword cmdNum
         push edi
@@ -63,7 +63,7 @@ _start:
         mov [root+eax-1], byte 't'      ; root+trsize is rootptr address        
 
         mov ecx, cmdNum
-        mov edx, readnodes
+        mov edx, readcmds
 .lp:    push ecx
         push edx
         pcall mainctrl, edx, rootptr 
@@ -74,7 +74,6 @@ _start:
         pop ecx
         loop .lp
 
-        xor ecx, ecx                    ; init sum
         pcall travsum, [rootptr]
         nop
 
@@ -123,7 +122,7 @@ mainctrl:
 travsum:
         push ebp
         mov ebp, esp
-        
+        xor ecx, ecx
         cmp dword [ebp+8], 0
         jne .rcall       
         xor ecx, ecx
