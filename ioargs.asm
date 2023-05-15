@@ -48,7 +48,7 @@ mainioctrl:
         call atoi   
         add esp, 8
 
-        cmp edx, byte 0
+        cmp edx, 0
         je .missval
 
         ; check number exceeding max
@@ -75,7 +75,7 @@ mainioctrl:
         call atoi   
         add esp, 8
 
-        cmp edx, byte 0
+        cmp edx, 0
         je .missval
 
         ; check number exceeding max
@@ -144,7 +144,7 @@ readcmd:
         call mainioctrl
         add esp, 8
 
-        cmp ecx, byte 0
+        cmp ecx, 0
         je .cont
         mov cl, [buff]
         mov [edi], cl
@@ -181,7 +181,7 @@ atoi:
         add eax, ecx            ; add in current digit
         dec ebx
         inc edx                 ; ready for next one
-        cmp ebx, byte 0         ; fine because there are 10 bytes at max
+        cmp ebx, 0              ; checking if we read intended num of chars
         jle .quit               ; until done
         jmp .top
 .quit:

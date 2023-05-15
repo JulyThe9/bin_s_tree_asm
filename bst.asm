@@ -48,6 +48,7 @@ _start:
         add esp, 12
 
         pop edi
+        
         nop
 
         ;initializing
