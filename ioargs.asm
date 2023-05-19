@@ -2,7 +2,11 @@
 
 %include 'kernel.inc'
 
+; convenient for the clearing macros later on
+%define strbuffsdef 12
+
 global readcmd
+global printnum
 
 section .data
 lf      db 0x0A
@@ -13,17 +17,24 @@ warr1len equ $-warr1msg
 
 section .bss
 
+; command parsing case:
 ; 1 for the action letter (i/d/p)
 ; 10 for digits in 4294967295 (max 32 bit uint)
 ; 1 for \n
-; LATER
+; number printing case:
+; 10 bytes for number, 2 bytes free
+strbuff     resb strbuffsdef
+strbsize    equ $-strbuff
 
-buff    resb 1+4
-bsize   equ $-buff
+; command buffer
+; 1 byte for action, 4 bytes for (optional) arg
+buff        resb 1+4
+bsize       equ $-buff
 
 readnodes resb 5*5
 
 section .text
+
 mainioctrl:
         push ebp
         mov ebp, esp
@@ -188,6 +199,47 @@ atoi:
 .quit:
         sub edx, [ebp+8]        ; to see how many chars we have read
         pop ebx
+        mov esp, ebp
+        pop ebp
+        ret
+
+printnum:
+        push ebp
+        mov ebp, esp
+        
+        push edi
+
+        xor edx, edx            ; edx:eax used for the dividend
+        lea edi, [strbuff + strbsize - 1]
+        mov ecx, 10
+        mov eax, [ebp+8]        ; num to convert
+
+        ; not more than 10 digits because elf_i386 and eax (4 bytes)
+        ; but TODO: might write a check, not to mess up memory
+.again: 
+        div ecx
+        mov [edi], dl           ; remainder < 10, 1 digit, lowest bits
+        add [edi], byte 48           ; convertin to asci
+        cmp eax, 0
+        je .cont
+        dec edi
+        mov edx, 0              ; edx:eax pair in div, so need to null edx
+        jmp short .again
+.cont:
+        lea ecx, [strbuff + strbsize]
+        sub ecx, edi
+        kernel 4, 1, edi, ecx   ; how many chars we wrote
+        call printnewline
+
+        ; clearing the buffer
+    %assign i 0
+    %rep strbuffsdef
+        mov [strbuff+i], byte 0
+    %assign i i+1
+    %endrep
+    
+.quit:
+        pop edi
         mov esp, ebp
         pop ebp
         ret

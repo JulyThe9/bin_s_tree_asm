@@ -13,6 +13,7 @@
 
 global _start
 extern readcmd
+extern printnum
 
 section .data
 ; reading consts
@@ -37,6 +38,10 @@ rootptr         resd 1
 
 section .text
 _start:
+;        push dword 8712
+;        call printnum
+;        add esp, 4
+
         mov eax, esp            ; recording cur stack top (# of cmd args)
         xor ecx, ecx
         mov edi, readcmds
@@ -62,6 +67,8 @@ _start:
         mov eax, trsize
         mov [root+eax-1], byte 't'      ; root+trsize is rootptr address        
 
+        ; TODO: ecx should contain not hardcoded cmdNum
+        ; but ACTUAL number of read commands
         mov ecx, cmdNum
         mov edx, readcmds
 .lp:    push ecx
@@ -111,7 +118,12 @@ mainctrl:
         jmp .quit
 
 .checksum:
-        pcall travsum, [edi] 
+        cmp bl, 's'
+        jne .quit
+        pcall travsum, [edi]
+        push ecx
+        call printnum
+        add esp, 4
 .quit:
         pop ebx
         pop edi
