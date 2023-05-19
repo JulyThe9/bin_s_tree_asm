@@ -140,15 +140,18 @@ readcmd:
 
         mov eax, [ebp+16]
         cmp ecx, eax        ; checking if too many cmd line args
-        jle .lp
+        jle .oknum
 
         push eax
         kernel 4, 2, warr1msg, warr1len
         pop eax
-
         mov ecx, eax
 
-.lp:    mov edx, [esi]
+.oknum:
+        xor eax, eax
+        push eax
+.lp:
+        mov edx, [esi]
         push ecx             ; storing ecx for loop
 
         push buff
@@ -162,15 +165,17 @@ readcmd:
         mov [edi], cl
         mov ecx, [buff+1]
         mov [edi+1], ecx
-        mov [buff+1], dword 0 ; clearing the buff, 1 will be rewritten
+        mov [buff+1], dword 0   ; clearing the buff, 1 will be rewritten
         add edi, 5
-
+                                ; might be better done with loc vars
+        inc dword [esp+4]       ; inc eax for a successfully read command
 .cont:
-        pop ecx             ; restoring ecx for loop
+        pop ecx                 ; restoring ecx for loop
         add esi, 4
         
         loop .lp
 .quit:
+        pop eax
         mov esp, ebp
         pop ebp
         ret

@@ -52,6 +52,8 @@ _start:
         xor eax, eax
         call readcmd
         add esp, 12
+        
+        mov ecx, eax
 
         ;initializing
         xor edi, edi
@@ -62,14 +64,12 @@ _start:
         ; node to be inserted
         mov esi, root
 
-        mov edi, root                   ;pointer to cur free cell to edi 
+        mov edi, root                   ; pointer to cur free cell to edi 
 
         mov eax, trsize
         mov [root+eax-1], byte 't'      ; root+trsize is rootptr address        
 
-        ; TODO: ecx should contain not hardcoded cmdNum
-        ; but ACTUAL number of read commands
-        mov ecx, cmdNum
+        ; ecx has the num of successfully read commands (sread:)
         mov edx, readcmds
 .lp:    push ecx
         push edx
