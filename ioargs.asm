@@ -38,9 +38,10 @@ strbsize    equ $-strbuff
 ; ['9']['4']['3']['2'][32]['3']['2'][32]...
 ; lengths serve as delimiters (instead of null-terminators)
 ; TODO: FIGURE OUT WHY GLOBAL/EXTERN nodeNum didn't work
-treevals    resb 10*8 + 1*8
-treevsize   equ $-treevals
-treevptr    resd 1
+treevals        resb 10*16 + 1*16
+treevlength     resd 1          ; how many bytes of treevals occupied
+treevptr        resd 1
+
 
 ; command buffer
 ; 1 byte for action, 4 bytes for (optional) arg
@@ -263,7 +264,6 @@ storenumstr:
         push esi
         push edi
 
-        mov ebx, treevals
         cmp [treevptr], dword 0
         jne .cont
         mov [treevptr], dword treevals
@@ -274,6 +274,7 @@ storenumstr:
 
         ; edi num start
         ; ecx how many chars we wrote
+        push ecx
 
         mov esi, edi
         mov edi, [treevptr]
@@ -291,8 +292,13 @@ storenumstr:
 
         mov [edi], byte 32          ; space
         inc edi
+        
+        ; increase total length of occupied treevals bytes
+        pop ecx
+        inc ecx             ; for space
+        add [treevlength], ecx
+        
         ; for further call
-        ; to be reset in printtree
         mov [treevptr], edi
 
         ; clearing the buffer
@@ -308,6 +314,13 @@ storenumstr:
 printtree:
         push ebp
         mov ebp, esp
+        kernel 4, 1, treevals, [treevlength]
+        call printnewline
+
+        ; resetting the buffer data (but not the buffer itself)
+        ; for the next storenumstr calls
+        mov [treevptr], dword treevals
+        mov [treevlength], dword 0
 .quit:
         mov esp, ebp
         pop ebp

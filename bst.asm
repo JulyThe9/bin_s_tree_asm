@@ -15,8 +15,8 @@
 global _start
 extern readcmd
 extern readinp
-extern storenumstr
 extern printtree
+extern storenumstr
 extern printnum
 
 
@@ -25,7 +25,7 @@ section .data
 cmdNum          equ 9
 cmdSize         equ 5
 ; tree consts
-nodeNum         equ 8
+nodeNum         equ 16
 nodeSize        equ 13
 freeOffset      equ 4
 leftOffset      equ 5
@@ -140,7 +140,7 @@ mainctrl:
 .checkpr:
         cmp bl, 'p'
         jne .checksum
-        ; print tree, implement later
+        call printtreectrl
         jmp .quit
 
 .checksum:
@@ -157,11 +157,51 @@ mainctrl:
         pop ebp
         ret
 
+printtreectrl:
+        push ebp
+        mov ebp, esp
+        push dword [rootptr]
+        call storetree
+        add esp, 4
+        call printtree
+.quit:
+        mov esp, ebp
+        pop ebp
+        ret
+
+storetree:
+        push ebp,
+        mov ebp, esp
+        cmp dword [ebp+8], 0            ; empty subtree
+        je .quit
+
+        mov ebx, [ebp+8]
+        add ebx, leftOffset
+        push dword [ebx]                ; [] because addrs to addrs
+        call storetree
+        add esp, 4
+
+        mov ebx, [ebp+8]
+        push dword [ebx]
+        call storenumstr
+        add esp, 4
+        
+        mov ebx, [ebp+8]
+        add ebx, rightOffset
+        push dword [ebx]                ; [] because addrs to addrs
+        call storetree
+        add esp, 4
+
+.quit:
+        mov esp, ebp
+        pop ebp
+        ret
+
 travsum:
         push ebp
         mov ebp, esp
         xor ecx, ecx
-        cmp dword [ebp+8], 0
+        cmp dword [ebp+8], 0    ; empty subtree
         jne .rcall       
         xor ecx, ecx
         jmp .quit
