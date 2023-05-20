@@ -70,6 +70,10 @@ _start:
         mov [root+eax-1], byte 't'      ; root+trsize is rootptr address        
 
         ; ecx has the num of successfully read commands (sread:)
+        ; no cmds, so no need to process them (bug otherwise: loop/lp)
+        cmp ecx, 0
+        je .donecmds
+        
         mov edx, readcmds
 .lp:    push ecx
         push edx
@@ -81,6 +85,7 @@ _start:
         pop ecx
         loop .lp
 
+.donecmds:
         pcall travsum, [rootptr]
         nop
 
