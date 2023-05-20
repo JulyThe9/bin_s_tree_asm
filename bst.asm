@@ -1,5 +1,5 @@
 %include 'stud_io.inc'
-%include 'kernel.inc'
+%include 'macros.inc'
 
 %macro pcall 1-*
     %rep %0-1
@@ -13,6 +13,8 @@
 
 global _start
 extern readcmd
+extern readinp
+extern storenumstr  ; TODO: implement
 extern printnum
 
 section .data
@@ -75,7 +77,7 @@ _start:
         je .donecmds
         
         mov edx, readcmds
-.lp:    push ecx
+.lp1:   push ecx
         push edx
         pcall mainctrl, edx, rootptr 
         
@@ -83,12 +85,28 @@ _start:
         add edx, cmdSize
 
         pop ecx
-        loop .lp
+        loop .lp1
 
 .donecmds:
-        pcall travsum, [rootptr]
-        nop
+        ; we are going to reuse readcmds for std in
+        ; but only first cmdSize bytes
+        mov edi, readcmds
+.lp2:   clearbytes readcmds, cmdSize
+        push edi        
+        call readinp
+        add esp, 4
 
+        cmp eax, 0      ; end of file occurred?      
+        je .exit
+        cmp ecx, 0      ; did we read a command (!0 -> yes, num of bytes)
+        je .lp2         ; nope, so don't execute
+
+        mov edx, readcmds
+        pcall mainctrl, edx, rootptr
+        jmp short .lp2
+
+.exit:  
+        nop
         kernel 1, 0
 
 mainctrl:

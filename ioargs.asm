@@ -1,11 +1,12 @@
 ;; bin_s_tree/ioargs.asm ;;
 
-%include 'kernel.inc'
+%include 'macros.inc'
 
 ; convenient for the clearing macros later on
 %define strbuffsdef 12
 
 global readcmd
+global readinp
 global printnum
 
 section .data
@@ -82,6 +83,7 @@ mainioctrl:
         call findstrlen
         add esp, 4
 
+        dec eax             ; -1 for command byte    
         push eax            ; how many bytes we read
         push edx            ; str address
         call atoi   
@@ -208,6 +210,33 @@ atoi:
         pop ebp
         ret
 
+readinp:
+        push ebp
+        mov ebp, esp
+        
+        push edi                ; CDECL
+        
+        mov edi, [ebp+8]        ; addrs where to write
+
+        ; strbuff will store the parsed string
+        ; the result will go directly into readcmds (ebp+8)
+        kernel 3, 0, strbuff, strbsize
+        cmp eax, 0
+        je .quit
+        
+        push eax                ; to return # of read b with syscall 3
+        xor ecx, ecx            ; to see the result of cmd parsing
+        push edi
+        push strbuff
+        call mainioctrl
+        add esp, 8
+        pop eax
+.quit:
+        pop edi
+        mov esp, ebp
+        pop ebp
+        ret
+
 printnum:
         push ebp
         mov ebp, esp
@@ -237,12 +266,7 @@ printnum:
         call printnewline
 
         ; clearing the buffer
-    %assign i 0
-    %rep strbuffsdef
-        mov [strbuff+i], byte 0
-    %assign i i+1
-    %endrep
-    
+        clearbytes strbuff, strbuffsdef    
 .quit:
         pop edi
         mov esp, ebp

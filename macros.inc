@@ -70,3 +70,11 @@
 %error "Please define either OS_LINUX or OS_FREEBSD"
 %endif
 %endmacro
+
+%macro clearbytes 2
+    %assign i 0
+    %rep %2
+        mov [%1+i], byte 0
+    %assign i i+1
+    %endrep
+%endmacro
