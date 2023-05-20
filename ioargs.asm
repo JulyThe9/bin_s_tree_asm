@@ -5,9 +5,13 @@
 ; convenient for the clearing macros later on
 %define strbuffsdef 12
 
+; funcs
 global readcmd
 global readinp
+global storenumstr
+global printtree
 global printnum
+
 
 section .data
 lf      db 0x0A
@@ -26,6 +30,17 @@ section .bss
 ; 10 bytes for number, 2 bytes free
 strbuff     resb strbuffsdef
 strbsize    equ $-strbuff
+
+; printtree buffer
+; 10 - max num of digits
+; 8 - node num
+; 1*8 - that many spaces (byte)
+; ['9']['4']['3']['2'][32]['3']['2'][32]...
+; lengths serve as delimiters (instead of null-terminators)
+; TODO: FIGURE OUT WHY GLOBAL/EXTERN nodeNum didn't work
+treevals    resb 10*8 + 1*8
+treevsize   equ $-treevals
+treevptr    resd 1
 
 ; command buffer
 ; 1 byte for action, 4 bytes for (optional) arg
@@ -163,6 +178,10 @@ readcmd:
 
         cmp ecx, 0
         je .cont
+
+        ; could have written directly to readcmds (edi)
+        ; without buff whatsoever (see readinp)
+        ; but will keep it for now for explicitness
         mov cl, [buff]
         mov [edi], cl
         mov ecx, [buff+1]
@@ -237,11 +256,86 @@ readinp:
         pop ebp
         ret
 
+storenumstr:
+        push ebp
+        mov ebp, esp
+
+        push esi
+        push edi
+
+        mov ebx, treevals
+        cmp [treevptr], dword 0
+        jne .cont
+        mov [treevptr], dword treevals
+
+.cont   push dword [ebp+8]      ; num to convert (pushing for uniformity)
+        call numtostr
+        add esp, 4
+
+        ; edi num start
+        ; ecx how many chars we wrote
+
+        mov esi, edi
+        mov edi, [treevptr]
+
+.lp:    mov dl, byte [esi]
+        mov [edi], dl
+        ; because strbuff is right before treevals in memory
+        ; when we are done iterating and increasing esi (works with
+        ; strbuff), it's pointing to treevals, so wihtout push/pop
+        ; the contents of treeval can be changed through esi later
+        ; (an interesting bug I discovered)
+        inc esi
+        inc edi
+        loop .lp
+
+        mov [edi], byte 32          ; space
+        inc edi
+        ; for further call
+        ; to be reset in printtree
+        mov [treevptr], edi
+
+        ; clearing the buffer
+        clearbytes strbuff, strbuffsdef    
+.quit:
+        mov edi, treevals
+        pop edi
+        pop esi
+        mov esp, ebp
+        pop ebp
+        ret
+
+printtree:
+        push ebp
+        mov ebp, esp
+.quit:
+        mov esp, ebp
+        pop ebp
+        ret
+
 printnum:
         push ebp
         mov ebp, esp
-        
         push edi
+
+        push dword [ebp+8]      ; num to convert (pushing for uniformity)
+        call numtostr
+        add esp, 4
+
+        kernel 4, 1, edi, ecx   ; how many chars we wrote
+        call printnewline
+
+        ; clearing the buffer
+        clearbytes strbuff, strbuffsdef    
+.quit:
+        pop edi
+        mov esp, ebp
+        pop ebp
+        ret
+
+numtostr:
+        push ebp
+        mov ebp, esp
 
         xor edx, edx            ; edx:eax used for the dividend
         lea edi, [strbuff + strbsize - 1]
@@ -253,7 +347,7 @@ printnum:
 .again: 
         div ecx
         mov [edi], dl           ; remainder < 10, 1 digit, lowest bits
-        add [edi], byte 48           ; convertin to asci
+        add [edi], byte 48           ; converting to asci
         cmp eax, 0
         je .cont
         dec edi
@@ -262,13 +356,8 @@ printnum:
 .cont:
         lea ecx, [strbuff + strbsize]
         sub ecx, edi
-        kernel 4, 1, edi, ecx   ; how many chars we wrote
-        call printnewline
 
-        ; clearing the buffer
-        clearbytes strbuff, strbuffsdef    
 .quit:
-        pop edi
         mov esp, ebp
         pop ebp
         ret

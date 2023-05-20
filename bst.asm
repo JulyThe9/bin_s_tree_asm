@@ -11,11 +11,14 @@
             add esp, (%0-1)*4
 %endmacro
 
+; funcs
 global _start
 extern readcmd
 extern readinp
-extern storenumstr  ; TODO: implement
+extern storenumstr
+extern printtree
 extern printnum
+
 
 section .data
 ; reading consts
