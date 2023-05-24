@@ -108,7 +108,7 @@ _start:
         pcall mainctrl, edx, rootptr
         jmp short .lp2
 
-.exit:  
+.exit:
         nop
         kernel 1, 0
 
@@ -139,8 +139,14 @@ mainctrl:
 
 .checkpr:
         cmp bl, 'p'
-        jne .checksum
+        jne .checkcleartr
         call printtreectrl
+        jmp .quit
+
+.checkcleartr:
+        cmp bl, 'c'
+        jne .checksum
+        call cleartree
         jmp .quit
 
 .checksum:
@@ -226,6 +232,22 @@ travsum:
         mov ecx, eax
 
         pop eax
+.quit:
+        mov esp, ebp
+        pop ebp
+        ret
+
+cleartree:
+        push ebp
+        mov ebp, esp
+        cmp [rootptr], dword 0          ; empty tree
+        je .quit
+.delroot:
+        mov eax, [rootptr]
+        mov eax, [eax]
+        pcall delete, eax, rootptr
+        cmp [rootptr], dword 0
+        jne .delroot
 .quit:
         mov esp, ebp
         pop ebp
