@@ -1,4 +1,3 @@
-%include 'stud_io.inc'
 %include 'macros.inc'
 
 %macro pcall 1-*
