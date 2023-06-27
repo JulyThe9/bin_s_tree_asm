@@ -1,8 +1,8 @@
 # bin_s_tree_asm
-Binary search tree implementation using Assembly language
+Binary search tree implementation using Assembly language. <br />
 
-Run ./runbst.sh to compile.
-Run ./bst to execute.
+Run ./runbst.sh to compile. <br />
+Run ./bst to execute. <br />
 
 Usage:
 i\<number\> : insert a node with value <number>
