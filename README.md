@@ -5,8 +5,8 @@ Run ./runbst.sh to compile. <br />
 Run ./bst to execute. <br />
 
 Usage:
-i\<number\> : insert a node with value <number>
-d\<number\> : delete a node with value <number>
-p         : print the tree (inorder traversal)
-c         : delete all nodes
-s         : print the sum of values
+i\<number\> : insert a node with value <number> <br />
+d\<number\> : delete a node with value <number> <br />
+p         : print the tree (inorder traversal) <br />
+c         : delete all nodes <br />
+s         : print the sum of values <br />
