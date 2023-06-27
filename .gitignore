@@ -1,0 +1,13 @@
+bst
+bsttests
+oldinsertstobst
+stud_io.inc
+runioargs.sh
+ioargs
+bst.cpp
+hlbst
+*.txt
+*.lst
+*.o
+.git
+.vscode
