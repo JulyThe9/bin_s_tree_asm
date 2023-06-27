@@ -4,7 +4,7 @@ Binary search tree implementation using Assembly language. <br />
 Run ./runbst.sh to compile. <br />
 Run ./bst to execute. <br />
 
-Usage:
+Usage: <br />
 i\<number\> : insert a node with value <number> <br />
 d\<number\> : delete a node with value <number> <br />
 p         : print the tree (inorder traversal) <br />
