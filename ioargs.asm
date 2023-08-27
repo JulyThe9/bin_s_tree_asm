@@ -375,7 +375,7 @@ numtostr:
         push ebp
         mov ebp, esp
 
-        xor edx, edx            ; edx:eax used for the dividend
+        xor edx, edx            ; eax:edx (quotient:remainder) used for the dividend
         lea edi, [strbuff + strbsize - 1]
         mov ecx, 10
         mov eax, [ebp+8]        ; num to convert
@@ -385,11 +385,11 @@ numtostr:
 .again: 
         div ecx
         mov [edi], dl           ; remainder < 10, 1 digit, lowest bits
-        add [edi], byte 48           ; converting to asci
-        cmp eax, 0
+        add [edi], byte 48      ; converting to asci
+        cmp eax, 0              ; nothing to divide any
         je .cont
         dec edi
-        mov edx, 0              ; edx:eax pair in div, so need to null edx
+        mov edx, 0              ; eax:edx pair in div, so need to null edx
         jmp short .again
 .cont:
         lea ecx, [strbuff + strbsize]
