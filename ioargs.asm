@@ -77,16 +77,17 @@ mainioctrl:
         call atoi   
         add esp, 8
 
-        cmp edx, 0
+        cmp edx, 0          ; mean there was no number after the command
         je .missval
 
-        ; check number exceeding max
+        ; TODO: check number exceeding max
         
+        ; writing the command char (bl) and valuer (eax) to buff
         mov [edi], bl
         inc edi 
         mov [edi], eax
 
-        mov ecx, 5
+        mov ecx, 5          ; bytes written, 1 for bl, 4 for eax
         jmp .quit
 
 .checkdel:
@@ -110,38 +111,42 @@ mainioctrl:
 
         ; check number exceeding max
         
+        ; writing the command char (bl) and valuer (eax) to buff
         mov [edi], bl
         inc edi
         mov [edi], eax
 
-        mov ecx, 5
+        mov ecx, 5          ; bytes written, 1 for bl, 4 for eax
         jmp .quit
 
 .checkpr:
         cmp [edx], byte 'p'
         jne .checkcleartr
         
+        ; writing the command char 'p'
         mov [edi], byte 'p'
 
-        mov ecx, 1
+        mov ecx, 1          ; bytes written, 1 for 'p'
         jmp .quit
 
 .checkcleartr:
         cmp [edx], byte 'c'
         jne .checksum
         
+        ; writing the command char 'p'
         mov [edi], byte 'c'
 
-        mov ecx, 1
+        mov ecx, 1          ; bytes written, 1 for 'c'
         jmp .quit
 
 .checksum:
         cmp [edx], byte 's'
         jne .wrongcmd
     
+        ; writing the command char 's'
         mov [edi], byte 's'
 
-        mov ecx, 1
+        mov ecx, 1          ; bytes written, 1 for 's'
         jmp .quit
 
 .missval:
@@ -159,20 +164,20 @@ readcmd:
         mov ebp, esp
         mov esi, [ebp+8]
         mov edi, [ebp+12]
-        mov ecx, [esi]
-        sub ecx, 1
-        cmp ecx, dword 0
+        mov ecx, [esi]      ; number of passed cmd args
+        sub ecx, 1          ; -1 for program name
+        cmp ecx, dword 0    ; no args = nothing to parse
         je .quit
         add esi, 8
 
-        mov eax, [ebp+16]
+        mov eax, [ebp+16]   ; max allowed num of args (third parameter)
         cmp ecx, eax        ; checking if too many cmd line args
         jle .oknum
 
         push eax
         kernel 4, 2, warr1msg, warr1len
         pop eax
-        mov ecx, eax
+        mov ecx, eax        ; cur arg num becomes max arg num
 
 .oknum:
         xor eax, eax
@@ -189,15 +194,16 @@ readcmd:
         cmp ecx, 0
         je .cont
 
+        ; writing cur command buff contents to readcmds buffer
         ; could have written directly to readcmds (edi)
         ; without buff whatsoever (see readinp)
         ; but will keep it for now for explicitness
         mov cl, [buff]
         mov [edi], cl
-        mov ecx, [buff+1]
-        mov [edi+1], ecx
-        mov [buff+1], dword 0   ; clearing the buff, 1 will be rewritten
-        add edi, 5
+        mov ecx, [buff+1]       ; offesting by the command byte
+        mov [edi+1], ecx        ; same
+        mov [buff+1], dword 0   ; clearing the buff, 1st byte will be rewritten
+        add edi, 5              ; moving to next command palce in readcmds (5 for cmdSize)
                                 ; might be better done with loc vars
         inc dword [esp+4]       ; inc eax for a successfully read command
 .cont:
