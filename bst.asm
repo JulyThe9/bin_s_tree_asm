@@ -42,10 +42,6 @@ rootptr         resd 1
 
 section .text
 _start:
-;        push dword 8712
-;        call printnum
-;        add esp, 4
-
         mov eax, esp            ; recording cur stack top (# of cmd args)
         xor ecx, ecx
         mov edi, readcmds
