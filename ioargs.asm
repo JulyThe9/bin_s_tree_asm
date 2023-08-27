@@ -15,7 +15,7 @@ global printnum
 
 section .data
 lf      db 0x0A
-help1msg db "Available commands: i<number> d<number> p c s", 10
+help1msg db "Available commands: i<number> d<number> p c s q", 10
 help1len equ $-help1msg
 warr1msg db "Warning: too many cmd line args, truncated to max", 10
 warr1len equ $-warr1msg
@@ -141,12 +141,22 @@ mainioctrl:
 
 .checksum:
         cmp [edx], byte 's'
-        jne .wrongcmd
+        jne .checkquit
     
         ; writing the command char 's'
         mov [edi], byte 's'
 
         mov ecx, 1          ; bytes written, 1 for 's'
+        jmp .quit
+
+.checkquit:
+        cmp [edx], byte 'q'
+        jne .wrongcmd
+    
+        ; writing the command char 'q'
+        mov [edi], byte 'q'
+
+        mov ecx, 1          ; bytes written, 1 for 'q'
         jmp .quit
 
 .missval:

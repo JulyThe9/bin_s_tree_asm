@@ -82,6 +82,10 @@ _start:
         pop edx
         add edx, cmdSize
 
+        ; q in mainctrl
+        cmp eax, 0
+        jne .exit
+
         pop ecx
         loop .lp1
 
@@ -101,13 +105,22 @@ _start:
 
         mov edx, readcmds
         pcall mainctrl, edx, rootptr
+
+        ; q in mainctrl
+        cmp eax, 0
+        jne .exit
+
         jmp short .lp2
 
 .exit:
         nop
         kernel 1, 0
 
+; returns: eax 0 = no exit, eax 1 = exit
+; we can do so because no entity after any of mainctrl calls 
+; relies on eax
 mainctrl:
+;.checkins
         push ebp
         mov ebp, esp
         push edi
@@ -121,6 +134,7 @@ mainctrl:
         mov eax, [edx+1]
         pcall insert, eax, edi
 
+        mov eax, 0
         jmp .quit
 
 .checkdel:
@@ -130,27 +144,38 @@ mainctrl:
         mov eax, [edx+1]
         pcall delete, eax, edi
 
+        mov eax, 0
         jmp .quit
 
 .checkpr:
         cmp bl, 'p'
         jne .checkcleartr
         call printtreectrl
+        mov eax, 0
         jmp .quit
 
 .checkcleartr:
         cmp bl, 'c'
         jne .checksum
         call cleartree
+        mov eax, 0
         jmp .quit
 
 .checksum:
         cmp bl, 's'
-        jne .quit
+        jne .checkquit
         pcall travsum, [edi]
         push ecx
         call printnum
         add esp, 4
+        mov eax, 0
+        jmp .quit
+
+.checkquit:
+        cmp bl, 'q'
+        jne .quit
+        mov eax, 1
+
 .quit:
         pop ebx
         pop edi
