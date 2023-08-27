@@ -10,3 +10,4 @@ d\<number\> : delete a node with value <number> <br />
 p           : print the tree (inorder traversal) <br />
 c           : delete all nodes <br />
 s           : print the sum of values <br />
+q           : quit the program <br />
