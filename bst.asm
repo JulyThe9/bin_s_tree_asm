@@ -55,7 +55,7 @@ _start:
         
         mov ecx, eax
 
-        ;initializing
+        ; initializing
         xor edi, edi
         mov [rootptr], dword 0
         
@@ -364,10 +364,10 @@ insert:
         cmp [esi], byte 't'     ; no more space to traverse, quitting
         je .cycle_sfree_quit     
         cmp [esi + freeOffset], byte 1
-        jne .cycle_sfree_quit  ; next node space free, quitting
+        jne .cycle_sfree_quit   ; next node space free, quitting
         jmp .cycle_sfree        ; next node space taken, cont. traverse
 .cycle_sfree_quit:        
-        mov eax, 0             ; success
+        mov eax, 0              ; success
 .quit:
         mov esp, ebp
         pop ebp
@@ -441,7 +441,7 @@ delete:
         mov esi, edx    ; free space before cur esi, moving to have no gaps 
         jmp .quit
 
-.rightChild:    ; if we are here then right is the only child
+.rightChild:                          ; if we are here then right is the only child
         mov edx, [edi]
         mov [edx], dword 0            ; value to null
         mov [edx + freeOffset], byte 0  ; free        
@@ -483,7 +483,7 @@ delete:
         add esp, 8
 
         mov edx, [edi]          ; orig edi due to CDECL of findim...
-        mov [edx], ebx             ; replacing val with successor val
+        mov [edx], ebx          ; replacing val with successor val
 
         ; deletion taken care by delete call above
         ; eax has its ret value

@@ -33,8 +33,8 @@ strbsize    equ $-strbuff
 
 ; printtree buffer
 ; 10 - max num of digits
-; 8 - node num
-; 1*8 - that many spaces (byte)
+; 16 - node num
+; 1*16 - that many spaces (byte)
 ; ['9']['4']['3']['2'][32]['3']['2'][32]...
 ; lengths serve as delimiters (instead of null-terminators)
 ; TODO: FIGURE OUT WHY GLOBAL/EXTERN nodeNum didn't work
@@ -313,7 +313,7 @@ storenumstr:
         ; (an interesting bug I discovered)
         inc esi
         inc edi
-        loop .lp
+        loop .lp                    ; will be done ecx times, and ecx stores the number of written chars
 
         mov [edi], byte 32          ; space
         inc edi
@@ -324,10 +324,10 @@ storenumstr:
         add [treevlength], ecx
         
         ; for further call
-        mov [treevptr], edi
+        mov [treevptr], edi        ; pointing right after the number we just wrote to treevals
 
         ; clearing the buffer
-        clearbytes strbuff, strbuffsdef    
+        clearbytes strbuff, strbuffsdef
 .quit:
         mov edi, treevals
         pop edi
