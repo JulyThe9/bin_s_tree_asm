@@ -15,7 +15,7 @@ global printnum
 
 section .data
 lf      db 0x0A
-help1msg db "Available commands: i<number> d<number> p c s q", 10
+help1msg db "Available commands: i<non-negative integer> d<non-negative integer> p c s q", 10
 help1len equ $-help1msg
 warr1msg db "Warning: too many cmd line args, truncated to max", 10
 warr1len equ $-warr1msg
