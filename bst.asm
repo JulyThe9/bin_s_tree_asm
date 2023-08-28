@@ -387,7 +387,7 @@ delete:
 
         cmp [edi], dword 0
         jne .candelete
-        mov eax, 1                    ; already exists
+        mov eax, 1                    ; not found
         jmp .quit
         
 .candelete:
@@ -400,6 +400,7 @@ delete:
         cmp [edx], dword 0
         jne .rightChild
         
+        ; noChildren case
         mov edx, [edi]
         mov [edi], dword 0            ; freeing
         mov [edx], dword 0            ; value to null
@@ -477,7 +478,7 @@ delete:
         mov ebx, [edx]
         mov ebx, [ebx]          ; successor val
         
-        push edx
+        push edx                ; "searching" from node we know we are deleting, guaranteed successful return
         push ebx
         call delete 
         add esp, 8
